@@ -14,10 +14,12 @@ const cookieParser = require("cookie-parser");
 app.use(
   cors({
     origin: ["https://mern-tester-front.vercel.app/"],
+    methods: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
     sameSite: "none",
   })
 );
+
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
