@@ -24,7 +24,7 @@ const cookieParser = require("cookie-parser");
 app.use((req, res, next) => {
   res.setHeader(
     "Access-Control-Allow-Origin",
-    "https://mern-tester-front.vercel.app/"
+    "https://mern-tester-front.vercel.app"
   );
   res.setHeader("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE");
   res.setHeader(
