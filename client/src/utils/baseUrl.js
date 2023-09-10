@@ -1,2 +1,2 @@
 export const base_url = "https://mern-tester-server.onrender.com/api/";
-export const nav_url = "http://localhost:3000/";
+export const nav_url = "https://mern-tester-front.vercel.app/";
