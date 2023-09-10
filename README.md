@@ -25,7 +25,7 @@ Tech-stack:
 Deployment:
 
 Back -> https://mern-tester-server.onrender.com/  NOTE: server goes sleeping when not actively used, so i doubt that you may catch it working.
-Front -> https://mern-tester-front.vercel.app/    NOTE: still facing CORS blocking problem ((, haven't found solution yet.
+Front -> https://mern-tester-front.vercel.app/
 
 Run Locally:
 1. Install dependencies from ./server and ./client by <code>npm install</code>.
