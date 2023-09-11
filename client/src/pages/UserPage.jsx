@@ -48,10 +48,10 @@ const UserPage = () => {
     return (
       <ListGroup.Item key={uuidv4()}>
         <Row>
-          <Col xs={9}>
+          <Col xs={12} sm={9}>
             <h3>{title}</h3>
           </Col>
-          <Col xs={3} className="d-flex justify-content-end">
+          <Col xs={12} sm={3} className="d-flex justify-content-end">
             <Button
               variant="success"
               className="mx-1"
