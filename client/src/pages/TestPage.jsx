@@ -29,6 +29,7 @@ const TestPage = () => {
   const [isAuth, setIsAuth] = useState(
     localStorage.getItem("user") ? true : false
   );
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
   const [showTest, setShowTest] = useState(false);
   const [isTestFinished, setIsTestFinished] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState({});
@@ -135,7 +136,7 @@ const TestPage = () => {
           <Stack>
             <div className="p-2">{test.description}</div>
             <div className="p-2">Questions amount:{test.questions.length}</div>
-            {isAuth ? (
+            {isAuth && user._id === test.owner._id ? (
               <>
                 <div className="p-2">
                   <h3>Candidates:</h3>
