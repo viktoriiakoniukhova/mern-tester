@@ -34,6 +34,7 @@ const loginUser = asyncHandler(async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
+      domain: "https://mern-tester-front.vercel.app",
       maxAge: 72 * 60 * 60 * 1000,
     });
     res.json({
