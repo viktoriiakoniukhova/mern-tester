@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 
 import {
   createBrowserRouter,
+  Navigate,
   RouterProvider,
   useLocation,
 } from "react-router-dom";
@@ -16,6 +17,7 @@ import SignupPage from "./pages/SignupPage";
 import TestPage from "./pages/TestPage";
 import TestCreatePage from "./pages/TestCreatePage";
 import TestEditPage from "./pages/TestEditPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -28,6 +30,14 @@ const ScrollToTop = () => {
 };
 
 const router = createBrowserRouter([
+  {
+    path: "*",
+    element: <Navigate to="/notfound" replace />,
+  },
+  {
+    path: "notfound",
+    element: <NotFoundPage />,
+  },
   {
     path: "/",
     element: <App />,
