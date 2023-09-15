@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const { Test, Question } = require("../config/db");
 const mongoose = require("mongoose");
+const { tryCatch } = require("../utils/tryCatch");
 
 const createQuestion = asyncHandler(async (req, res, question, testId) => {
   const ownerId = req.user._id;
@@ -23,35 +24,29 @@ const createQuestion = asyncHandler(async (req, res, question, testId) => {
   // res.json(newQuestion);
 });
 
-const fetchQuestion = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  try {
+const fetchQuestion = asyncHandler(
+  tryCatch(async (req, res) => {
+    const { id } = req.params;
     const findQuestion = await Question.findOne({ _id: id });
     res.json(findQuestion);
-  } catch (error) {
-    throw new Error(error);
-  }
-});
+  })
+);
 
-const fetchAllQuestions = asyncHandler(async (req, res) => {
-  try {
+const fetchAllQuestions = asyncHandler(
+  tryCatch(async (req, res) => {
     const allQuestions = await Question.find({});
     res.json(allQuestions);
-  } catch (error) {
-    throw new Error(error);
-  }
-});
+  })
+);
 
-const fetchQuestionsByTest = asyncHandler(async (req, res) => {
-  const { testId } = req.params;
+const fetchQuestionsByTest = asyncHandler(
+  tryCatch(async (req, res) => {
+    const { testId } = req.params;
 
-  try {
     const testQuestions = await Question.find({ test: testId });
     res.json(testQuestions);
-  } catch (error) {
-    throw new Error(error);
-  }
-});
+  })
+);
 
 const deleteQuestion = asyncHandler(async (req, res, question, testId) => {
   // const { id } = req.params;
