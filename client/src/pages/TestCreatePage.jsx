@@ -108,7 +108,7 @@ const TestCreatePage = () => {
               {({ push, remove }) => (
                 <Col className="my-2">
                   {values.questions.map((question, index) => (
-                    <div key={index}>
+                    <div key={index} style={{ marginTop: "10px" }}>
                       {/* Question Text */}
                       <Form.Group controlId={`questions[${index}].text`}>
                         <Form.Label>
@@ -259,6 +259,14 @@ const TestCreatePage = () => {
                             errors.questions[index].score}
                         </Form.Control.Feedback>
                       </Form.Group>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => remove(index)}
+                        style={{ marginTop: "10px" }}
+                      >
+                        Remove Question #{index + 1}
+                      </Button>
                     </div>
                   ))}
                   <Button
