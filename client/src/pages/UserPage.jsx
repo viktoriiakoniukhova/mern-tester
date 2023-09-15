@@ -14,6 +14,7 @@ import testService from "../utils/service/testService";
 
 const UserPage = () => {
   const [user, setUser] = useState({});
+  const navigate = useNavigate();
 
   let { userId } = useParams();
 
@@ -21,11 +22,10 @@ const UserPage = () => {
     const fetchUser = async () => {
       const user = await authService.getUser(userId);
       setUser(user);
+      if (!user) navigate("/notfound", { replace: true });
     };
     fetchUser();
   }, []);
-
-  const navigate = useNavigate();
 
   const handleTestOpen = (testId) => {
     navigate(`/test/${testId}`);
@@ -44,7 +44,7 @@ const UserPage = () => {
     navigate(`/${userId}/edit`);
   };
 
-  const listItems = user.tests?.map(({ _id, title }) => {
+  const listItems = user?.tests?.map(({ _id, title }) => {
     return (
       <ListGroup.Item key={uuidv4()}>
         <Row>
@@ -84,10 +84,9 @@ const UserPage = () => {
       </ListGroup.Item>
     );
   });
-
   return (
     <Container className="py-4">
-      {user._id && (
+      {user?._id && (
         <Stack direction="vertical" gap={3}>
           <Stack direction="horizontal">
             <div className="p-2">

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import * as formik from "formik";
 import * as yup from "yup";
 import Form from "react-bootstrap/Form";
@@ -9,6 +9,7 @@ import authService from "../utils/service/authService";
 
 const LoginPage = () => {
   const { Formik } = formik;
+  const [error, setError] = useState("");
 
   const schema = yup.object().shape({
     email: yup
@@ -24,7 +25,7 @@ const LoginPage = () => {
   });
 
   const handleSubmit = (values) => {
-    authService.login(values);
+    authService.login(values, setError);
   };
   return (
     <Formik
@@ -69,6 +70,13 @@ const LoginPage = () => {
               </Form.Control.Feedback>
             </Form.Group>
           </Row>
+          {error && (
+            <Row>
+              <Col className="text-center">
+                <p style={{ color: "#ff0000" }}>{error}</p>
+              </Col>
+            </Row>
+          )}
           <Row>
             <Col className="text-center">
               <Button type="submit" className="text-center">

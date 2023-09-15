@@ -10,6 +10,7 @@ import { useParams } from "react-router-dom";
 
 const UserEditPage = () => {
   const [user, setUser] = useState({});
+  const [error, setError] = useState("");
 
   let { userId } = useParams();
 
@@ -37,7 +38,7 @@ const UserEditPage = () => {
   });
 
   const handleSubmit = (values) => {
-    authService.updateUser(userId, values);
+    authService.updateUser(userId, values, setError);
   };
 
   return (
@@ -83,7 +84,11 @@ const UserEditPage = () => {
                   </Form.Control.Feedback>
                 </Form.Group>
               </Row>
-
+              <Row>
+                <Col className="text-center">
+                  <p style={{ color: "#ff0000" }}>{error}</p>
+                </Col>
+              </Row>
               <Row className="row">
                 <Col className="col text-center">
                   <Button type="submit" className="text-center">
