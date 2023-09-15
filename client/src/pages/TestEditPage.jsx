@@ -118,7 +118,7 @@ const TestEditPage = () => {
                 {({ push, remove }) => (
                   <Col className="my-2">
                     {values.questions.map((question, index) => (
-                      <div key={index}>
+                      <div key={index} style={{ marginTop: "10px" }}>
                         {/* Question Text */}
                         <Form.Group controlId={`questions[${index}].text`}>
                           <Form.Label>
@@ -243,15 +243,20 @@ const TestEditPage = () => {
                                     1)}
                               </option>
                             ) : (
-                              <option>Select Correct Answer</option>
+                              <option value="">Select Correct Answer</option>
                             )}
 
                             {question.options.map((_, optionIndex) => {
-                              return (
-                                <option key={optionIndex} value={_}>
-                                  Option {optionIndex + 1}
-                                </option>
-                              );
+                              if (
+                                (test.questions[index] &&
+                                  _ !== test.questions[index].answer) ||
+                                !test.questions[index]
+                              )
+                                return (
+                                  <option key={optionIndex} value={_}>
+                                    Option {optionIndex + 1}
+                                  </option>
+                                );
                             })}
                           </Field>
                           <Form.Control.Feedback type="invalid">
@@ -284,6 +289,14 @@ const TestEditPage = () => {
                               errors.questions[index].score}
                           </Form.Control.Feedback>
                         </Form.Group>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => remove(index)}
+                          style={{ marginTop: "10px" }}
+                        >
+                          Remove Question #{index + 1}
+                        </Button>
                       </div>
                     ))}
                     <Button

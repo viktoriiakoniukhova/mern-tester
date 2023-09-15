@@ -6,7 +6,7 @@ import Stack from "react-bootstrap/Stack";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import testService from "../utils/service/testService";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import Question from "../components/Question";
@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from "uuid";
 
 const TestPage = () => {
   const [test, setTest] = useState({});
+  const navigate = useNavigate();
 
   let { testId } = useParams();
 
@@ -22,6 +23,7 @@ const TestPage = () => {
     const fetchTest = async () => {
       const test = await testService.getTest(testId);
       setTest(test);
+      if (!test) navigate("/notfound", { replace: true });
     };
     fetchTest();
   }, []);
