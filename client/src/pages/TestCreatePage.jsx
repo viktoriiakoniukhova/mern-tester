@@ -1,7 +1,7 @@
 import React from "react";
 import * as formik from "formik";
 import * as yup from "yup";
-import Form from "react-bootstrap/Form";
+import { Form, FormCheck } from "react-bootstrap";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
@@ -22,6 +22,7 @@ const TestCreatePage = () => {
       .min(25, "*Description must have at least 25 characters")
       .max(2000, "*Description can't be longer than 2000 characters")
       .required("*Description is required"),
+    shuffle: yup.boolean().required("*Shuffle mode is required"),
     questions: yup.array().of(
       yup.object().shape({
         text: yup
@@ -61,6 +62,7 @@ const TestCreatePage = () => {
           title: "",
           description: "",
           questions: [{ text: "", options: ["", ""], answer: "", score: "1" }],
+          shuffle: false,
         }}
         validationSchema={schema}
         onSubmit={handleSubmit}
@@ -102,6 +104,17 @@ const TestCreatePage = () => {
               <Form.Control.Feedback type="invalid">
                 {errors.description}
               </Form.Control.Feedback>
+            </Form.Group>
+            <Form.Group>
+              <FormCheck
+                className="my-2"
+                type="switch"
+                id="shuffle"
+                label="Shuffle Questions"
+                name="shuffle"
+                checked={values.shuffle}
+                onChange={handleChange}
+              />
             </Form.Group>
             {/* Questions FieldArray */}
             <FieldArray name="questions">
@@ -173,7 +186,10 @@ const TestCreatePage = () => {
                                       variant="danger"
                                       size="sm"
                                       onClick={() => remove(optionIndex)}
-                                      style={{ marginLeft: "10px" }}
+                                      style={{
+                                        marginLeft: "10px",
+                                        marginTop: "10px",
+                                      }}
                                     >
                                       Remove
                                     </Button>

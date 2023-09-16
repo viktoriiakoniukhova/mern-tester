@@ -11,6 +11,10 @@ var testSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    shuffle: {
+      type: Boolean,
+      required: true,
+    },
     questions: [
       {
         type: mongoose.Schema.Types.ObjectId,

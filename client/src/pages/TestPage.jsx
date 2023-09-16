@@ -15,6 +15,8 @@ import { v4 as uuidv4 } from "uuid";
 
 const TestPage = () => {
   const [test, setTest] = useState({});
+  const [questions, setQuestions] = React.useState([]);
+
   const navigate = useNavigate();
 
   let { testId } = useParams();
@@ -24,13 +26,20 @@ const TestPage = () => {
       const test = await testService.getTest(testId);
       setTest(test);
       if (!test) navigate("/notfound", { replace: true });
+      else {
+        setQuestions(
+          test.shuffle ? shuffleQuestions(test.questions) : test.questions
+        );
+      }
     };
+
     fetchTest();
   }, []);
 
   const [isAuth, setIsAuth] = useState(
     localStorage.getItem("user") ? true : false
   );
+
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
   const [showTest, setShowTest] = useState(false);
   const [isTestFinished, setIsTestFinished] = useState(false);
@@ -89,7 +98,15 @@ const TestPage = () => {
     return totalScore;
   };
 
-  const formItems = test.questions?.map((question, index) => {
+  const shuffleQuestions = (questions) => {
+    for (let i = questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [questions[i], questions[j]] = [questions[j], questions[i]];
+    }
+    return questions;
+  };
+
+  const formItems = questions?.map((question, index) => {
     return (
       <Question
         index={index}
