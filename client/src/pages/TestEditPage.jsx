@@ -36,31 +36,46 @@ const TestEditPage = () => {
       .max(2000, "*Description can't be longer than 2000 characters")
       .required("*Description is required"),
     shuffle: yup.boolean().required("*Shuffle mode is required"),
-    questions: yup.array().of(
-      yup.object().shape({
-        text: yup
-          .string()
-          .min(2, "*Question text must have at least 2 characters")
-          .max(1000, "*Question text can't be longer than 1000 characters")
-          .required("*Question text is required"),
-        options: yup
-          .array()
-          .of(
-            yup
-              .string()
-              .min(2, "*Option must have at least 2 characters")
-              .max(200, "*Option can't be longer than 200 characters")
-              .required("*Option is required")
-          )
-          .min(2, "*At least 2 options are required"),
-        answer: yup.string().required("*Answer is required"),
-        score: yup
-          .number()
-          .default(1)
-          .min(1, "*Score must be at least 1")
-          .required("*Score is required"),
-      })
-    ),
+    questions: yup
+      .array()
+      .of(
+        yup.object().shape({
+          text: yup
+            .string()
+            .min(2, "*Question text must have at least 2 characters")
+            .max(1000, "*Question text can't be longer than 1000 characters")
+            .required("*Question text is required"),
+          options: yup
+            .array()
+            .of(
+              yup
+                .string()
+                .min(2, "*Option must have at least 2 characters")
+                .max(200, "*Option can't be longer than 200 characters")
+                .required("*Option is required")
+            )
+            .min(2, "*At least 2 options are required")
+            .test("is-unique", "*Options must be unique", function (value) {
+              if (!value || value.length === 0) {
+                return true; // Skip validation if options array is empty
+              }
+              return new Set(value).size === value.length;
+            }),
+          answer: yup.string().required("*Answer is required"),
+          score: yup
+            .number()
+            .default(1)
+            .min(1, "*Score must be at least 1")
+            .required("*Score is required"),
+        })
+      )
+      .test("is-unique", "*Questions must be unique", function (value) {
+        if (!value || value.length === 0) {
+          return true; // Skip validation if questions array is empty
+        }
+        const questionTexts = value.map((question) => question.text);
+        return new Set(questionTexts).size === questionTexts.length;
+      }),
   });
 
   const handleSubmit = (values) => {
@@ -142,18 +157,12 @@ const TestEditPage = () => {
                             placeholder="Enter question text"
                             as={Form.Control}
                             isInvalid={
-                              touched.questions &&
-                              touched.questions[index] &&
-                              errors.questions &&
-                              errors.questions[index] &&
-                              touched.questions[index].text &&
-                              errors.questions[index].text
+                              touched.questions?.[index]?.text &&
+                              errors.questions?.[index]?.text
                             }
                           />
                           <Form.Control.Feedback type="invalid">
-                            {errors.questions &&
-                              errors.questions[index] &&
-                              errors.questions[index].text}
+                            {errors.questions?.[index]?.text}
                           </Form.Control.Feedback>
                         </Form.Group>
 
@@ -176,16 +185,10 @@ const TestEditPage = () => {
                                       placeholder={`Option ${optionIndex + 1}`}
                                       as={Form.Control}
                                       isInvalid={
-                                        touched.questions &&
-                                        touched.questions[index] &&
-                                        errors.questions &&
-                                        errors.questions[index] &&
-                                        touched.questions[index].options &&
-                                        errors.questions[index].options &&
-                                        touched.questions[index].options[
+                                        touched.questions?.[index]?.options?.[
                                           optionIndex
                                         ] &&
-                                        errors.questions[index].options[
+                                        errors.questions?.[index]?.options?.[
                                           optionIndex
                                         ]
                                       }
@@ -201,10 +204,9 @@ const TestEditPage = () => {
                                       </Button>
                                     )}
                                     <Form.Control.Feedback type="invalid">
-                                      {errors.questions &&
-                                        errors.questions[index] &&
-                                        errors.questions[index].options &&
-                                        errors.questions[index].options[
+                                      {typeof errors.questions?.[index]
+                                        ?.options !== "string" &&
+                                        errors.questions?.[index]?.options?.[
                                           optionIndex
                                         ]}
                                     </Form.Control.Feedback>
@@ -226,7 +228,19 @@ const TestEditPage = () => {
                             </Row>
                           )}
                         </FieldArray>
-
+                        {/* Display the error message for duplicate options */}
+                        {errors.questions?.[index]?.options &&
+                          typeof errors.questions?.[index]?.options ===
+                            "string" && (
+                            <div
+                              className="text-danger "
+                              style={{
+                                marginBottom: "10px",
+                              }}
+                            >
+                              {errors.questions?.[index]?.options}
+                            </div>
+                          )}
                         {/* Correct Answer */}
                         <Form.Group controlId={`questions[${index}].answer`}>
                           <Form.Label>Correct Answer</Form.Label>
@@ -329,7 +343,19 @@ const TestEditPage = () => {
                   </Col>
                 )}
               </FieldArray>
-
+              {/* Display the error message for duplicate questions */}
+              {touched.questions &&
+                errors.questions &&
+                typeof errors.questions === "string" && (
+                  <div
+                    className="text-danger"
+                    style={{
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {errors.questions}
+                  </div>
+                )}
               <Button type="submit" variant="primary" disabled={isSubmitting}>
                 Update Test
               </Button>
