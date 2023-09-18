@@ -37,7 +37,12 @@ const TestPage = () => {
   }, []);
 
   const [isAuth, setIsAuth] = useState(
-    localStorage.getItem("user") ? true : false
+    document.cookie
+      .split("; ")
+      .filter((row) => row.startsWith("refreshToken="))
+      .map((c) => c.split("=")[1])[0]
+      ? true
+      : false
   );
 
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
@@ -74,13 +79,7 @@ const TestPage = () => {
       email,
       score: getTotalScore(),
     };
-    console.log(values);
     setIsTestFinished(true);
-    // const dataToSend = {
-    //   ...test,
-    //   candidates: [...test.candidates, candidateData],
-    // };
-    console.log(candidateData);
     testService.addCandidateToTest(testId, candidateData);
   };
 
