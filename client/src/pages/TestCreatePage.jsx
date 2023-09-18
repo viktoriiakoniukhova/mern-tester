@@ -8,6 +8,9 @@ import Row from "react-bootstrap/Row";
 import Container from "react-bootstrap/esm/Container";
 import testService from "../utils/service/testService";
 
+const FILE_SIZE = 160 * 1024;
+const SUPPORTED_FORMATS = ["image/jpg", "image/jpeg", "image/gif", "image/png"];
+
 const TestCreatePage = () => {
   const { Formik, Field, FieldArray } = formik;
 
@@ -32,6 +35,18 @@ const TestCreatePage = () => {
             .min(2, "*Question text must have at least 2 characters")
             .max(1000, "*Question text can't be longer than 1000 characters")
             .required("*Question text is required"),
+          imageUrl: yup
+            .mixed()
+            .nullable(true)
+            .test("fileSize", "*File too large", (value) => {
+              if (value === null) return true;
+              return value && value.size <= FILE_SIZE;
+            })
+            .test("fileFormat", "*Unsupported Format", (value) => {
+              if (value === null) return true;
+              return value && SUPPORTED_FORMATS.includes(value.type);
+            })
+            .default(null),
           options: yup
             .array()
             .of(
@@ -65,18 +80,38 @@ const TestCreatePage = () => {
       }),
   });
 
-  const handleSubmit = (values) => {
+  const handleSubmit = async (values) => {
+    const uploadPromises = values.questions.map(async (question) => {
+      if (question.imageUrl) {
+        const newImageUrl = await testService.uploadImage(question.imageUrl);
+        return { ...question, imageUrl: newImageUrl };
+      }
+      return question;
+    });
+
+    const updatedQuestions = await Promise.all(uploadPromises);
+    values.questions = updatedQuestions;
+    // console.log(values);
+
     testService.createTest(values);
   };
 
   return (
     <Container className="my-4">
-      <h1>Create Test</h1>
+      <h1 className=" text-center">Create Test</h1>
       <Formik
         initialValues={{
           title: "",
           description: "",
-          questions: [{ text: "", options: ["", ""], answer: "", score: "1" }],
+          questions: [
+            {
+              text: "",
+              imageUrl: null,
+              options: ["", ""],
+              answer: "",
+              score: "1",
+            },
+          ],
           shuffle: false,
         }}
         validationSchema={schema}
@@ -85,6 +120,7 @@ const TestCreatePage = () => {
         {({
           handleSubmit,
           handleChange,
+          setFieldValue,
           values,
           errors,
           touched,
@@ -92,7 +128,9 @@ const TestCreatePage = () => {
         }) => (
           <Form onSubmit={handleSubmit}>
             <Form.Group controlId="title">
-              <Form.Label>Title</Form.Label>
+              <Form.Label>
+                <h3>Title</h3>
+              </Form.Label>
               <Form.Control
                 type="text"
                 name="title"
@@ -107,7 +145,9 @@ const TestCreatePage = () => {
             </Form.Group>
 
             <Form.Group controlId="description">
-              <Form.Label>Description</Form.Label>
+              <Form.Label>
+                <h3>Description</h3>
+              </Form.Label>
               <Form.Control
                 type="text"
                 name="description"
@@ -140,7 +180,7 @@ const TestCreatePage = () => {
                       {/* Question Text */}
                       <Form.Group controlId={`questions[${index}].text`}>
                         <Form.Label>
-                          <b>Question #{index + 1} </b>
+                          <h3>Question #{index + 1} </h3>
                         </Form.Label>
                         <Field
                           type="text"
@@ -156,6 +196,71 @@ const TestCreatePage = () => {
                           {errors.questions?.[index]?.text}
                         </Form.Control.Feedback>
                       </Form.Group>
+                      {/* Image upload */}
+                      <Form.Group
+                        controlId={`questions[${index}].imgUrl`}
+                        className="d-flex flex-column my-2"
+                      >
+                        <Form.Label>
+                          <b>Image</b>
+                        </Form.Label>
+                        {!question.imageUrl && (
+                          <input
+                            type="file"
+                            name={`questions[${index}].imageUrl`}
+                            accept={SUPPORTED_FORMATS.join(", ")}
+                            onChange={(event) => {
+                              setFieldValue(
+                                `questions[${index}].imageUrl`,
+                                event.currentTarget.files[0]
+                              );
+                            }}
+                          />
+                        )}
+                        {question.imageUrl && (
+                          <div>
+                            <img
+                              src={
+                                typeof question.imageUrl !== "string"
+                                  ? URL.createObjectURL(question.imageUrl)
+                                  : undefined
+                              }
+                              alt="Uploaded"
+                              style={{
+                                borderRadius: "10px",
+                                width: "100px",
+                                height: "100px",
+                              }}
+                            />
+                            <Button
+                              variant="danger"
+                              onClick={() => {
+                                setFieldValue(
+                                  `questions[${index}].imageUrl`,
+                                  null
+                                );
+                              }}
+                              style={{
+                                marginLeft: "10px",
+                                marginTop: "10px",
+                              }}
+                            >
+                              Remove Image
+                            </Button>
+                          </div>
+                        )}
+                        {errors.questions?.[index]?.imageUrl &&
+                          touched.questions?.[index] && (
+                            <div
+                              className="text-danger "
+                              style={{
+                                marginBottom: "10px",
+                              }}
+                            >
+                              {errors.questions[index].imageUrl}
+                            </div>
+                          )}
+                      </Form.Group>
                       {/* Options FieldArray */}
                       <FieldArray name={`questions[${index}].options`}>
                         {({ push, remove }) => (
@@ -167,7 +272,7 @@ const TestCreatePage = () => {
                                   controlId={`questions[${index}].options[${optionIndex}]`}
                                 >
                                   <Form.Label>
-                                    Option {optionIndex + 1}
+                                    <b>Option {optionIndex + 1}</b>
                                   </Form.Label>
                                   <Field
                                     type="text"
@@ -236,7 +341,9 @@ const TestCreatePage = () => {
                         )}
                       {/* Correct Answer */}
                       <Form.Group controlId={`questions[${index}].answer`}>
-                        <Form.Label>Correct Answer</Form.Label>
+                        <Form.Label>
+                          <b>Correct Answer</b>
+                        </Form.Label>
                         <Field
                           as="select"
                           name={`questions[${index}].answer`}
@@ -253,7 +360,7 @@ const TestCreatePage = () => {
                         >
                           <option value="">Select Correct Answer</option>
                           {question.options.map((_, optionIndex) => (
-                            <option key={optionIndex} value={optionIndex}>
+                            <option key={optionIndex} value={_}>
                               Option {optionIndex + 1}
                             </option>
                           ))}
@@ -266,7 +373,9 @@ const TestCreatePage = () => {
                       </Form.Group>
                       {/* Score */}
                       <Form.Group controlId={`questions[${index}].score`}>
-                        <Form.Label>Score</Form.Label>
+                        <Form.Label>
+                          <b>Score</b>
+                        </Form.Label>
                         <Field
                           type="number"
                           name={`questions[${index}].score`}
@@ -303,9 +412,10 @@ const TestCreatePage = () => {
                     onClick={() =>
                       push({
                         text: "",
+                        imageUrl: null,
                         options: ["", ""],
                         answer: "",
-                        score: "",
+                        score: "1",
                       })
                     }
                     style={{ marginTop: "10px" }}
