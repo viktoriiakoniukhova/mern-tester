@@ -9,18 +9,18 @@ Completed Requirements:
 5. Ability to View Assessment Results (candidate info and score).
 6. Basic Styling.
 7. Responsive Design.
+8. (NEW) Randomize question order.
+9. (NEW) Ability to upload files (images).
 
 Non-completed Requirements (Bonus):
 
 1. Implement a timer for assessments.
-2. Randomize question order.
-3. Different question types (e.g., multiple choice, true/false, short answer, etc.)
-4. Ability to upload files.
+2. Different question types (e.g., multiple choice, true/false, short answer, etc.)
 
 Tech-stack: 
 
 1. Front:  => React, React-router, React-bootstrap, formik, yup, axios, uuid.
-2. Back => Node, Express, Mongoose, jsonwebtoken, bcrypt, nodemon.
+2. Back => Node, Express, Mongoose,cloudinary, multer, streamify, jsonwebtoken, bcrypt, nodemon.
 
 Deployment:
 
