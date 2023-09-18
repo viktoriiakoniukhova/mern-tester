@@ -8,7 +8,12 @@ import authService from "../utils/service/authService";
 
 const Navigation = () => {
   const [isAuth, setIsAuth] = useState(
-    localStorage.getItem("user") ? true : false
+    document.cookie
+      .split("; ")
+      .filter((row) => row.startsWith("refreshToken="))
+      .map((c) => c.split("=")[1])[0]
+      ? true
+      : false
   );
 
   const userId = localStorage.getItem("user")

@@ -22,6 +22,39 @@ const createTest = async (testData) => {
   try {
     const response = await axios.post(`${base_url}test/add`, testData, config);
     window.location.replace(nav_url);
+    if (response.data) {
+      return response.data;
+    }
+  } catch (error) {
+    window.alert(error.response.data.message);
+  }
+};
+
+const uploadImage = async (image) => {
+  try {
+    const formData = new FormData();
+    formData.append("image", image);
+
+    const response = await axios.post(`${base_url}question/upload`, formData, {
+      ...config,
+      data: formData,
+    });
+
+    if (response.data) {
+      return response.data;
+    }
+  } catch (error) {
+    window.alert(error.response.data.message);
+  }
+};
+
+const deleteImage = async (imageUrl) => {
+  try {
+    const response = await axios.post(
+      `${base_url}question/delete`,
+      { imageUrl },
+      config
+    );
 
     if (response.data) {
       return response.data;
@@ -75,6 +108,8 @@ const testService = {
   deleteTest,
   createTest,
   addCandidateToTest,
+  uploadImage,
+  deleteImage,
 };
 
 export default testService;

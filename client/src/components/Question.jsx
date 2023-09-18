@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Form } from "react-bootstrap";
+import { Container, Form } from "react-bootstrap";
 import { v4 as uuidv4 } from "uuid";
+import Image from "react-bootstrap/Image";
 
 const Question = ({
   index,
@@ -9,7 +10,7 @@ const Question = ({
   selectedAnswers,
   isTestFinished,
 }) => {
-  const { text, options, answer } = question;
+  const { text, imageUrl, options, answer } = question;
   const [selectedOption, setSelectedOption] = useState(null);
 
   const handleChange = (e) => {
@@ -30,6 +31,11 @@ const Question = ({
       <Form.Label>
         <b>{text}</b>
       </Form.Label>
+      {imageUrl && (
+        <Container>
+          <Image src={imageUrl} alt={`question-${index}-image`} fluid />
+        </Container>
+      )}
       {options?.map((option) => (
         <Form.Check
           key={uuidv4()}

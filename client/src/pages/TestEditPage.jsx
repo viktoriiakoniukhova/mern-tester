@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
 import * as formik from "formik";
 import * as yup from "yup";
-import Form from "react-bootstrap/Form";
+import { Form, FormCheck } from "react-bootstrap";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import Container from "react-bootstrap/esm/Container";
 import testService from "../utils/service/testService";
 import { useParams } from "react-router-dom";
+
+const FILE_SIZE = 160 * 1024;
+const SUPPORTED_FORMATS = ["image/jpg", "image/jpeg", "image/gif", "image/png"];
 
 const TestEditPage = () => {
   const [test, setTest] = useState({});
@@ -35,34 +38,88 @@ const TestEditPage = () => {
       .min(25, "*Description must have at least 25 characters")
       .max(2000, "*Description can't be longer than 2000 characters")
       .required("*Description is required"),
-    questions: yup.array().of(
-      yup.object().shape({
-        text: yup
-          .string()
-          .min(2, "*Question text must have at least 2 characters")
-          .max(1000, "*Question text can't be longer than 1000 characters")
-          .required("*Question text is required"),
-        options: yup
-          .array()
-          .of(
-            yup
-              .string()
-              .min(2, "*Option must have at least 2 characters")
-              .max(200, "*Option can't be longer than 200 characters")
-              .required("*Option is required")
-          )
-          .min(2, "*At least 2 options are required"),
-        answer: yup.string().required("*Answer is required"),
-        score: yup
-          .number()
-          .default(1)
-          .min(1, "*Score must be at least 1")
-          .required("*Score is required"),
-      })
-    ),
+    shuffle: yup.boolean().required("*Shuffle mode is required"),
+    questions: yup
+      .array()
+      .of(
+        yup.object().shape({
+          text: yup
+            .string()
+            .min(2, "*Question text must have at least 2 characters")
+            .max(1000, "*Question text can't be longer than 1000 characters")
+            .required("*Question text is required"),
+          imageUrl: yup
+            .mixed()
+            .nullable(true)
+            .test("fileSize", "*File too large", (value) => {
+              if (value === null || typeof value === "string") return true;
+              return value && value.size <= FILE_SIZE;
+            })
+            .test("fileFormat", "*Unsupported Format", (value) => {
+              if (value === null || typeof value === "string") return true;
+              return value && SUPPORTED_FORMATS.includes(value.type);
+            }),
+          // .default(null)
+          options: yup
+            .array()
+            .of(
+              yup
+                .string()
+                .min(2, "*Option must have at least 2 characters")
+                .max(200, "*Option can't be longer than 200 characters")
+                .required("*Option is required")
+            )
+            .min(2, "*At least 2 options are required")
+            .test("is-unique", "*Options must be unique", function (value) {
+              if (!value || value.length === 0) {
+                return true; // Skip validation if options array is empty
+              }
+              return new Set(value).size === value.length;
+            }),
+          answer: yup.string().required("*Answer is required"),
+          score: yup
+            .number()
+            .default(1)
+            .min(1, "*Score must be at least 1")
+            .required("*Score is required"),
+        })
+      )
+      .test("is-unique", "*Questions must be unique", function (value) {
+        if (!value || value.length === 0) {
+          return true; // Skip validation if questions array is empty
+        }
+        const questionTexts = value.map((question) => question.text);
+        return new Set(questionTexts).size === questionTexts.length;
+      }),
   });
 
-  const handleSubmit = (values) => {
+  const handleSubmit = async (values) => {
+    const uploadPromises = values.questions.map(async (question) => {
+      if (typeof question.imageUrl !== "string") {
+        if (
+          test.questions.some(
+            (q) =>
+              q._id === question._id &&
+              typeof q.imageUrl === "string" &&
+              typeof q.imageUrl !== typeof question.imageUrl
+          )
+        ) {
+          const deletedImageUrl = await testService.deleteImage(
+            test.questions[
+              test.questions.findIndex((q) => q._id === question._id)
+            ].imageUrl
+          );
+        }
+        if (question.imageUrl !== null) {
+          const newImageUrl = await testService.uploadImage(question.imageUrl);
+          return { ...question, imageUrl: newImageUrl };
+        }
+      }
+      return question;
+    });
+
+    const updatedQuestions = await Promise.all(uploadPromises);
+    values.questions = updatedQuestions;
     testService.updateTest(test.owner._id, testId, values);
   };
 
@@ -78,6 +135,7 @@ const TestEditPage = () => {
           {({
             handleSubmit,
             handleChange,
+            setFieldValue,
             values,
             errors,
             touched,
@@ -113,6 +171,17 @@ const TestEditPage = () => {
                   {errors.description}
                 </Form.Control.Feedback>
               </Form.Group>
+              <Form.Group>
+                <FormCheck
+                  className="my-2"
+                  type="switch"
+                  id="shuffle"
+                  label="Shuffle Questions"
+                  name="shuffle"
+                  checked={values.shuffle}
+                  onChange={handleChange}
+                />
+              </Form.Group>
               {/* Questions FieldArray */}
               <FieldArray name="questions">
                 {({ push, remove }) => (
@@ -130,21 +199,79 @@ const TestEditPage = () => {
                             placeholder="Enter question text"
                             as={Form.Control}
                             isInvalid={
-                              touched.questions &&
-                              touched.questions[index] &&
-                              errors.questions &&
-                              errors.questions[index] &&
-                              touched.questions[index].text &&
-                              errors.questions[index].text
+                              touched.questions?.[index]?.text &&
+                              errors.questions?.[index]?.text
                             }
                           />
                           <Form.Control.Feedback type="invalid">
-                            {errors.questions &&
-                              errors.questions[index] &&
-                              errors.questions[index].text}
+                            {errors.questions?.[index]?.text}
                           </Form.Control.Feedback>
                         </Form.Group>
-
+                        {/* Image upload */}
+                        <Form.Group
+                          controlId={`questions[${index}].imgUrl`}
+                          className="d-flex flex-column my-2"
+                        >
+                          <Form.Label>
+                            <b>Image</b>
+                          </Form.Label>
+                          {!question.imageUrl && (
+                            <input
+                              type="file"
+                              name={`questions[${index}].imageUrl`}
+                              accept={SUPPORTED_FORMATS.join(", ")}
+                              onChange={(event) => {
+                                setFieldValue(
+                                  `questions[${index}].imageUrl`,
+                                  event.currentTarget.files[0]
+                                );
+                              }}
+                            />
+                          )}
+                          {question.imageUrl && (
+                            <div>
+                              <img
+                                src={
+                                  typeof question.imageUrl !== "string"
+                                    ? URL.createObjectURL(question.imageUrl)
+                                    : question.imageUrl
+                                }
+                                alt="Uploaded"
+                                style={{
+                                  borderRadius: "10px",
+                                  width: "100px",
+                                  height: "100px",
+                                }}
+                              />
+                              <Button
+                                variant="danger"
+                                onClick={() => {
+                                  setFieldValue(
+                                    `questions[${index}].imageUrl`,
+                                    null
+                                  );
+                                }}
+                                style={{
+                                  marginLeft: "10px",
+                                  marginTop: "10px",
+                                }}
+                              >
+                                Remove Image
+                              </Button>
+                            </div>
+                          )}
+                          {errors.questions?.[index]?.imageUrl &&
+                            touched.questions?.[index] && (
+                              <div
+                                className="text-danger "
+                                style={{
+                                  marginBottom: "10px",
+                                }}
+                              >
+                                {errors.questions[index].imageUrl}
+                              </div>
+                            )}
+                        </Form.Group>
                         {/* Options FieldArray */}
                         <FieldArray name={`questions[${index}].options`}>
                           {({ push, remove }) => (
@@ -164,16 +291,10 @@ const TestEditPage = () => {
                                       placeholder={`Option ${optionIndex + 1}`}
                                       as={Form.Control}
                                       isInvalid={
-                                        touched.questions &&
-                                        touched.questions[index] &&
-                                        errors.questions &&
-                                        errors.questions[index] &&
-                                        touched.questions[index].options &&
-                                        errors.questions[index].options &&
-                                        touched.questions[index].options[
+                                        touched.questions?.[index]?.options?.[
                                           optionIndex
                                         ] &&
-                                        errors.questions[index].options[
+                                        errors.questions?.[index]?.options?.[
                                           optionIndex
                                         ]
                                       }
@@ -189,10 +310,9 @@ const TestEditPage = () => {
                                       </Button>
                                     )}
                                     <Form.Control.Feedback type="invalid">
-                                      {errors.questions &&
-                                        errors.questions[index] &&
-                                        errors.questions[index].options &&
-                                        errors.questions[index].options[
+                                      {typeof errors.questions?.[index]
+                                        ?.options !== "string" &&
+                                        errors.questions?.[index]?.options?.[
                                           optionIndex
                                         ]}
                                     </Form.Control.Feedback>
@@ -214,7 +334,19 @@ const TestEditPage = () => {
                             </Row>
                           )}
                         </FieldArray>
-
+                        {/* Display the error message for duplicate options */}
+                        {errors.questions?.[index]?.options &&
+                          typeof errors.questions?.[index]?.options ===
+                            "string" && (
+                            <div
+                              className="text-danger "
+                              style={{
+                                marginBottom: "10px",
+                              }}
+                            >
+                              {errors.questions?.[index]?.options}
+                            </div>
+                          )}
                         {/* Correct Answer */}
                         <Form.Group controlId={`questions[${index}].answer`}>
                           <Form.Label>Correct Answer</Form.Label>
@@ -237,8 +369,11 @@ const TestEditPage = () => {
                               <option value={test.questions[index].answer}>
                                 {"Option " +
                                   (test.questions[index].options.findIndex(
-                                    (option) =>
-                                      option === test.questions[index].answer
+                                    (option) => {
+                                      return (
+                                        option === test.questions[index].answer
+                                      );
+                                    }
                                   ) +
                                     1)}
                               </option>
@@ -305,6 +440,7 @@ const TestEditPage = () => {
                       onClick={() =>
                         push({
                           text: "",
+                          imageUrl: null,
                           options: ["", ""],
                           answer: "",
                           score: "1",
@@ -317,7 +453,19 @@ const TestEditPage = () => {
                   </Col>
                 )}
               </FieldArray>
-
+              {/* Display the error message for duplicate questions */}
+              {touched.questions &&
+                errors.questions &&
+                typeof errors.questions === "string" && (
+                  <div
+                    className="text-danger"
+                    style={{
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {errors.questions}
+                  </div>
+                )}
               <Button type="submit" variant="primary" disabled={isSubmitting}>
                 Update Test
               </Button>

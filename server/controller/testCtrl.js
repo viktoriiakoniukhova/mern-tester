@@ -11,11 +11,12 @@ const { tryCatch } = require("../utils/tryCatch");
 const createTest = asyncHandler(
   tryCatch(async (req, res) => {
     const ownerId = req.user._id;
-    const { title, description, questions } = req.body;
+    const { title, description, questions, shuffle } = req.body;
 
     const newTest = await Test.create({
       title,
       description,
+      shuffle,
       owner: ownerId,
     });
 
@@ -88,14 +89,15 @@ const updateTest = asyncHandler(
     const { id } = req.params;
     // const updatedData = req.body;
     const ownerId = req.user._id;
-    const { title, description, questions } = req.body;
+    const { title, description, questions, shuffle } = req.body;
+
     const test = await Test.findById(id).populate({
       path: "questions",
       model: Question,
     });
     const findandUpdateTest = await Test.findByIdAndUpdate(
       id,
-      { title, description },
+      { title, description, shuffle },
       {
         new: true,
       }

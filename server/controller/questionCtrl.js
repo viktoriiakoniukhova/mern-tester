@@ -2,11 +2,28 @@ const asyncHandler = require("express-async-handler");
 const { Test, Question } = require("../config/db");
 const mongoose = require("mongoose");
 const { tryCatch } = require("../utils/tryCatch");
+const { upload, destroy } = require("../middlewares/uploadImages");
 
+const uploadImage = asyncHandler(
+  tryCatch(async (req, res) => {
+    const imgUrl = await upload(req.file);
+    res.json(imgUrl);
+  })
+);
+
+const deleteImage = asyncHandler(
+  tryCatch(async (req, res) => {
+    const deletedImage = await destroy(req.body.imageUrl);
+    res.json(deletedImage);
+  })
+);
 const createQuestion = asyncHandler(async (req, res, question, testId) => {
   const ownerId = req.user._id;
   // const { testId } = req.params;
-
+  // if (question.imgUrl) {
+  //   middleware(req, res, uploadImage);
+  //   const imgUrl = await upload(question.imgUrl);
+  // }
   const newQuestion = await Question.create({
     // ...req.body,
     ...question,
@@ -111,4 +128,6 @@ module.exports = {
   createQuestion,
   updateQuestion,
   deleteQuestion,
+  uploadImage,
+  deleteImage,
 };
