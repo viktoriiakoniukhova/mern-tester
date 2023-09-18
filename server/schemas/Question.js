@@ -7,6 +7,10 @@ var questionSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    imageUrl: {
+      type: String,
+      required: false,
+    },
     options: [
       {
         type: String,
