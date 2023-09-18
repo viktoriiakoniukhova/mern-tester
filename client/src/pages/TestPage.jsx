@@ -26,11 +26,13 @@ const TestPage = () => {
       const test = await testService.getTest(testId);
       setTest(test);
       if (!test) navigate("/notfound", { replace: true });
+
       else {
         setQuestions(
           test.shuffle ? shuffleQuestions(test.questions) : test.questions
         );
       }
+
     };
 
     fetchTest();

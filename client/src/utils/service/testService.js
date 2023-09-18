@@ -22,7 +22,6 @@ const createTest = async (testData) => {
   try {
     const response = await axios.post(`${base_url}test/add`, testData, config);
     window.location.replace(nav_url);
-
     if (response.data) {
       return response.data;
     }
