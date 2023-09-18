@@ -9,6 +9,9 @@ import Container from "react-bootstrap/esm/Container";
 import testService from "../utils/service/testService";
 import { useParams } from "react-router-dom";
 
+const FILE_SIZE = 160 * 1024;
+const SUPPORTED_FORMATS = ["image/jpg", "image/jpeg", "image/gif", "image/png"];
+
 const TestEditPage = () => {
   const [test, setTest] = useState({});
 
@@ -45,6 +48,18 @@ const TestEditPage = () => {
             .min(2, "*Question text must have at least 2 characters")
             .max(1000, "*Question text can't be longer than 1000 characters")
             .required("*Question text is required"),
+          imageUrl: yup
+            .mixed()
+            .nullable(true)
+            .test("fileSize", "*File too large", (value) => {
+              if (value === null || typeof value === "string") return true;
+              return value && value.size <= FILE_SIZE;
+            })
+            .test("fileFormat", "*Unsupported Format", (value) => {
+              if (value === null || typeof value === "string") return true;
+              return value && SUPPORTED_FORMATS.includes(value.type);
+            }),
+          // .default(null)
           options: yup
             .array()
             .of(
@@ -78,7 +93,33 @@ const TestEditPage = () => {
       }),
   });
 
-  const handleSubmit = (values) => {
+  const handleSubmit = async (values) => {
+    const uploadPromises = values.questions.map(async (question) => {
+      if (typeof question.imageUrl !== "string") {
+        if (
+          test.questions.some(
+            (q) =>
+              q._id === question._id &&
+              typeof q.imageUrl === "string" &&
+              typeof q.imageUrl !== typeof question.imageUrl
+          )
+        ) {
+          const deletedImageUrl = await testService.deleteImage(
+            test.questions[
+              test.questions.findIndex((q) => q._id === question._id)
+            ].imageUrl
+          );
+        }
+        if (question.imageUrl !== null) {
+          const newImageUrl = await testService.uploadImage(question.imageUrl);
+          return { ...question, imageUrl: newImageUrl };
+        }
+      }
+      return question;
+    });
+
+    const updatedQuestions = await Promise.all(uploadPromises);
+    values.questions = updatedQuestions;
     testService.updateTest(test.owner._id, testId, values);
   };
 
@@ -94,6 +135,7 @@ const TestEditPage = () => {
           {({
             handleSubmit,
             handleChange,
+            setFieldValue,
             values,
             errors,
             touched,
@@ -165,7 +207,71 @@ const TestEditPage = () => {
                             {errors.questions?.[index]?.text}
                           </Form.Control.Feedback>
                         </Form.Group>
-
+                        {/* Image upload */}
+                        <Form.Group
+                          controlId={`questions[${index}].imgUrl`}
+                          className="d-flex flex-column my-2"
+                        >
+                          <Form.Label>
+                            <b>Image</b>
+                          </Form.Label>
+                          {!question.imageUrl && (
+                            <input
+                              type="file"
+                              name={`questions[${index}].imageUrl`}
+                              accept={SUPPORTED_FORMATS.join(", ")}
+                              onChange={(event) => {
+                                setFieldValue(
+                                  `questions[${index}].imageUrl`,
+                                  event.currentTarget.files[0]
+                                );
+                              }}
+                            />
+                          )}
+                          {question.imageUrl && (
+                            <div>
+                              <img
+                                src={
+                                  typeof question.imageUrl !== "string"
+                                    ? URL.createObjectURL(question.imageUrl)
+                                    : question.imageUrl
+                                }
+                                alt="Uploaded"
+                                style={{
+                                  borderRadius: "10px",
+                                  width: "100px",
+                                  height: "100px",
+                                }}
+                              />
+                              <Button
+                                variant="danger"
+                                onClick={() => {
+                                  setFieldValue(
+                                    `questions[${index}].imageUrl`,
+                                    null
+                                  );
+                                }}
+                                style={{
+                                  marginLeft: "10px",
+                                  marginTop: "10px",
+                                }}
+                              >
+                                Remove Image
+                              </Button>
+                            </div>
+                          )}
+                          {errors.questions?.[index]?.imageUrl &&
+                            touched.questions?.[index] && (
+                              <div
+                                className="text-danger "
+                                style={{
+                                  marginBottom: "10px",
+                                }}
+                              >
+                                {errors.questions[index].imageUrl}
+                              </div>
+                            )}
+                        </Form.Group>
                         {/* Options FieldArray */}
                         <FieldArray name={`questions[${index}].options`}>
                           {({ push, remove }) => (
@@ -263,8 +369,11 @@ const TestEditPage = () => {
                               <option value={test.questions[index].answer}>
                                 {"Option " +
                                   (test.questions[index].options.findIndex(
-                                    (option) =>
-                                      option === test.questions[index].answer
+                                    (option) => {
+                                      return (
+                                        option === test.questions[index].answer
+                                      );
+                                    }
                                   ) +
                                     1)}
                               </option>
@@ -331,6 +440,7 @@ const TestEditPage = () => {
                       onClick={() =>
                         push({
                           text: "",
+                          imageUrl: null,
                           options: ["", ""],
                           answer: "",
                           score: "1",
