@@ -21,7 +21,7 @@ router.get("/refresh", handleRefreshToken);
 router.get("/logout", logout);
 
 router.get("/tests", fetchUserTests);
-router.get("/:id", fetchUser);
+router.get("/:id", authMiddleware, fetchUser);
 router.delete("/delete", authMiddleware, deleteUser);
 router.put("/edit", authMiddleware, updateUser);
 
