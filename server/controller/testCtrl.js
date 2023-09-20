@@ -90,6 +90,7 @@ const updateTest = asyncHandler(
     // const updatedData = req.body;
     const ownerId = req.user._id;
     const { title, description, questions, shuffle } = req.body;
+
     const test = await Test.findById(id).populate({
       path: "questions",
       model: Question,
@@ -101,6 +102,7 @@ const updateTest = asyncHandler(
         new: true,
       }
     );
+    console.log(questions);
 
     // Delete question
     if (test.questions.length > questions.length) {
