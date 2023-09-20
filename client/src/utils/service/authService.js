@@ -5,7 +5,7 @@ import axios from "axios";
 const register = async (user, setError) => {
   try {
     const response = await axios.post(`${base_url}user/register`, user);
-    window.location.replace(`${nav_url}login`);
+    window.location.replace(`${nav_url}/login`);
 
     if (response.data) {
       return response.data;
@@ -62,7 +62,7 @@ const getUser = async (userId) => {
 const updateUser = async (userId, userData, setError) => {
   try {
     const response = await axios.put(`${base_url}user/edit`, userData, config);
-    window.location.replace(`${nav_url}${userId}`);
+    window.location.replace(`${nav_url}/${userId}`);
     if (response.data) {
       return response.data;
     }

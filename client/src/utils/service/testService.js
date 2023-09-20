@@ -71,7 +71,7 @@ const updateTest = async (userId, testId, updatedData) => {
       updatedData,
       config
     );
-    window.location.replace(`${nav_url}${userId}`);
+    window.location.replace(`${nav_url}/${userId}`);
 
     if (response.data) return response.data;
   } catch (error) {

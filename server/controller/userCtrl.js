@@ -38,7 +38,7 @@ const loginUser = asyncHandler(
         }
       );
       res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
+        httpOnly: false,
         secure: true,
         sameSite: "none",
         domain: "https://mern-tester-front.vercel.app",
